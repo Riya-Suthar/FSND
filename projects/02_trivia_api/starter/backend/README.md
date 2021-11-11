@@ -83,9 +83,12 @@ This README is missing documentation of your endpoints. Below is an example for 
 
 Endpoints
 GET '/api/v1.0/categories'
-GET ...
-POST ...
-DELETE ...
+GET '/questions?page=${integer}'
+GET '/categories/${id}/questions'
+POST '/questions'
+POST '/questions/search'
+POST '/quizzes'
+DELETE '/questions/${id}'
 
 GET '/api/v1.0/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
@@ -97,6 +100,104 @@ GET '/api/v1.0/categories'
 '4' : "History",
 '5' : "Entertainment",
 '6' : "Sports"}
+
+
+
+GET '/questions?page=${integer}'
+- Fetches a set of questions (paginated), total number of questions, categories, current category
+- Request Arguments: page - integer, current category - string
+- Returns: An object with 10 questions (paginated), total number of questions, categories, current category
+GET '/questions?page=${integer}'
+- Fetches a paginated set of questions, a total number of questions, all categories and current category string. 
+- Request Arguments: page - integer
+- Returns: success status as True or False, An object with 10 paginated questions, total questions, object including all categories, and current category string
+{
+    'questions': [
+        {
+            'id': 10,
+            'question': 'question',
+            'answer': 'answer', 
+            'difficulty': 1,
+            'category': 3
+        },
+    ],
+    'totalQuestions': 50,
+    'categories': { '1' : "Science",
+    '2' : "Art",
+    '3' : "Geography",
+    '4' : "History",
+    '5' : "Entertainment",
+    '6' : "Sports" },
+    'currentCategory': 'History'
+}
+
+
+GET '/categories/${id}/questions'
+- Fetches the paginated questions grouped by the given category
+- Request arguments: page - integer
+- Returns: A json object with paginated set of questions, total number of questions for that category, current category
+{
+    'questions': [
+        {
+            'id': 10,
+            'question': 'question',
+            'answer': 'answer', 
+            'difficulty': 1,
+            'category': 3
+        },
+    ],
+    'totalQuestions': 50,
+    'currentCategory': 'History'
+}
+
+POST '/questions'
+- Sends a post request with a question object to create a new question
+- Request Body:
+{
+    'question':'new question',
+    'answer':'answer',
+    'difficulty':2,
+    'category':3
+}
+-Returns: Returns success status as True or False, paginated set of question, total number of questions
+
+
+
+POST '/questions/search'
+- Sends a post request with search term to search for questions having the search term
+- Request Body:
+{
+    'searchTerm':'search term',
+    'currentCategory':'history'
+}
+-Returns: Success status as True or False, paginated set of questions, total number of questions and current category
+
+
+POST '/quizzes'
+- Sends a post request to get the next question
+- Request Body:
+{
+    'previous_questions':[1,2,5,10] (array of question id's)
+    'quiz_category':'history' (string value of current category)
+}
+- Returns: success object as True or False, a single new question
+{
+    'success':True,
+    'question':{
+        'id':2,
+        'question':'this is the question',
+        'answer':'this is the answer to the above question',
+        'difficulty':1,
+        'category':3
+    }
+}
+
+
+DELETE '/questions/${id}'
+- Sends a delete request to delete the question
+- Request parameter: page - integer
+- Returns: success status as True or False, paginated set of questions, total number of questions
+
 
 ```
 

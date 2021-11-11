@@ -12,7 +12,7 @@ class QuestionView extends Component {
       questions: [],
       page: 1,
       totalQuestions: 0,
-      categories: {},
+      categories:{},
       currentCategory: null,
     }
   }
@@ -23,7 +23,7 @@ class QuestionView extends Component {
 
   getQuestions = () => {
     $.ajax({
-      url: `/questions?page=${this.state.page}`, //TODO: update request URL
+      url: `/questions?page=${this.state.page}&category=${this.state.currentCategory}`, //TODO: update request URL
       type: "GET",
       success: (result) => {
         this.setState({
@@ -78,11 +78,11 @@ class QuestionView extends Component {
 
   submitSearch = (searchTerm) => {
     $.ajax({
-      url: `/questions`, //TODO: update request URL
+      url: `/questions/search`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',
-      data: JSON.stringify({searchTerm: searchTerm}),
+      data: JSON.stringify({searchTerm: searchTerm, currentCategory : this.state.currentCategory}),
       xhrFields: {
         withCredentials: true
       },
@@ -137,6 +137,7 @@ class QuestionView extends Component {
         <div className="questions-list">
           <h2>Questions</h2>
           {this.state.questions.map((q, ind) => (
+            
             <Question
               key={q.id}
               question={q.question}

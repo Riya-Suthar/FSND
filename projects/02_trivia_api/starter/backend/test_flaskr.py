@@ -24,6 +24,14 @@ class TriviaTestCase(unittest.TestCase):
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
+        
+        self.newQuestion = {
+            'id': 20,
+            'question' : 'When is the International Yoga Day Celebrated ',
+            'answer': '21 June',
+            'category': 'Science',
+            'difficulty': 2
+        }
     
     def tearDown(self):
         """Executed after reach test"""
@@ -33,6 +41,33 @@ class TriviaTestCase(unittest.TestCase):
     TODO
     Write at least one test for each test for successful operation and for expected errors.
     """
+    def test_default_route(self):
+        res = self.client().get('/')
+        self.assertEquals(res.status_code, 200)
+
+    def test_add_question(self):
+        res = self.client().post('/questions', json=self.newQuestion)
+        data = json.loads(res.data)
+        self.assertEquals(data['success'], True)
+        self.assertTrue(data['questions'])
+
+    def test_get_categories(self):
+        res = self.client().get('/categories')
+        data = json.loads(res.data)
+        self.assertTrue(len(data['categories']))
+
+    def test_get_questions(self):
+        res = self.client().get('/questions?page=1')
+        data = json.loads(res.data)
+        self.assertEquals(data['success'], True)
+        self.assertTrue(len(data['questions']))
+        self.assertTrue(len(data['categories']))
+
+    def test_delete_question(self):
+        res = self.client().delete('/questions/1')
+        data = json.loads(res.data)
+        self.assertEquals(data['success'], True)
+        
 
 
 # Make the tests conveniently executable
