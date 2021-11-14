@@ -5,10 +5,8 @@ from flask_cors import CORS
 import random
 from sqlalchemy.sql.elements import Null
 from sqlalchemy.sql.operators import exists
-
 from sqlalchemy.sql.selectable import CTE
 from sqlalchemy.sql.sqltypes import String
-
 from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
@@ -61,24 +59,30 @@ def create_app(test_config=None):
   '''
   @app.route('/questions', methods=['GET'])
   def getQuestions():
-    page = request.args.get('page', 1, type=int)
-    currentCategory = request.args.get('currentCategory', 'Art' , type=String)
-    start = (page - 1) * QUESTIONS_PER_PAGE
-    end = start + QUESTIONS_PER_PAGE
-    questions = Question.query.all()
-    questionsOnPage = [question.format() for question in questions]
-    categories = Category.query.all()
-    cats = {}
-    for category in categories:
-      cats[category.id] = category.type
-    
-    return jsonify ({
-      'success': True,
-      'questions': questionsOnPage[start:end],
-      'totalQuestions': len(questionsOnPage),
-      'categories': cats,
-      'current_category': currentCategory
-    })
+    try:
+      page = request.args.get('page', 1, type=int)
+      currentCategory = request.args.get('currentCategory', 'Art' , type=String)
+      start = (page - 1) * QUESTIONS_PER_PAGE
+      end = start + QUESTIONS_PER_PAGE
+      questions = Question.query.all()
+      questionsOnPage = [question.format() for question in questions]
+      categories = Category.query.all()
+      cats = {}
+      for category in categories:
+        cats[category.id] = category.type
+      ques = questionsOnPage[start:end]
+      if(len(ques)<=0):
+        abort(404)
+      
+      return jsonify ({
+        'success': True,
+        'questions': ques,
+        'totalQuestions': len(questionsOnPage),
+        'categories': cats,
+        'current_category': currentCategory
+      })
+    except Exception as e:
+      abort(404)
 
 
       
@@ -94,14 +98,12 @@ def create_app(test_config=None):
   @app.route('/questions/<int:id>', methods=['DELETE'])
   def deleteQuestion(id):
     try:
-
       question = Question.query.filter(Question.id==id).one_or_none()
       page = request.args.get("page",1,type=int)
       start = (page -1)*QUESTIONS_PER_PAGE
       end = start + QUESTIONS_PER_PAGE
       if question is None:
         abort(404)
-      
       question.delete()
       totalQuestions = Question.query.all()
       questions = [question.format() for question in totalQuestions]
@@ -111,9 +113,8 @@ def create_app(test_config=None):
         'questions' : questions,
         'id': id,
         'totalQuestion' : len(totalQuestions)
-
-
       })
+
     except Exception as e:
       abort(400)
 
@@ -137,14 +138,11 @@ def create_app(test_config=None):
       answer = reqBody.get("answer", None)
       difficulty = reqBody.get("difficulty", None)
       category = reqBody.get("category", None)
-
       question = Question(question=question,answer=answer,difficulty=difficulty,category=category)
       question.insert()
-
       page = request.args.get('page', 1 , type=int)
       start = (page -1)*QUESTIONS_PER_PAGE
       end = start + QUESTIONS_PER_PAGE
-
       questions = Question.query.all()
       question = [q.format() for q in questions[start:end]]
 
@@ -153,10 +151,9 @@ def create_app(test_config=None):
         'questions':question,
         'totalQuestions':len(questions)
       })
+
     except Exception as e:
       abort(422)
-
-
 
 
   '''
@@ -171,34 +168,36 @@ def create_app(test_config=None):
   '''
   @app.route('/questions/search', methods = ['POST'])
   def searchQuestion():
-    reqBody = request.get_json()
-    term = reqBody.get("searchTerm", None)
-    currentCategory = reqBody.get("currentCategory", None)
-    # body = request.get_json()
-    # searchTerm = body.get('searchTerm')
-    print(term)
-    question = Question.query.all()
-    page = request.args.get('page',1,type=int)
-    start = (page - 1)*QUESTIONS_PER_PAGE
-    end = start + QUESTIONS_PER_PAGE
-    questions = []
-    for q in question:
-      print(str(q.question))
-      if(q.question!=None):
-        if(str(term) in str(q.question)):
-          print("found ==================")
-          questions.append(q.format())
+    try:
+      reqBody = request.get_json()
+      term = reqBody.get("searchTerm", None)
+      currentCategory = reqBody.get("currentCategory", None)
+      print(term)
+      question = Question.query.all()
+      page = request.args.get('page',1,type=int)
+      start = (page - 1)*QUESTIONS_PER_PAGE
+      end = start + QUESTIONS_PER_PAGE
+      questions = []
+      found = False
+      for q in question:
+        print(str(q.question))
+        if(q.question!=None):
+          if(str(term) in str(q.question)):
+            found = True
+            questions.append(q.format())
+      total_questions = questions[start:end]
+      if(found==False):
+        abort(404)
 
-    total_questions = questions[start:end]
+      return jsonify({
+        'success':True,
+        'questions':total_questions,
+        'totalQuestions':len(questions),
+        'current_category': currentCategory
+      })
 
-   
-    return jsonify({
-      'success':True,
-      'questions':total_questions,
-      'totalQuestions':len(questions),
-      'current_category': currentCategory
-      
-    })
+    except Exception as e:
+      abort(422)
 
   '''
   @TODO: 
@@ -250,11 +249,10 @@ def create_app(test_config=None):
   def playQuiz():
     try:
       body = request.get_json()
-
       category = body.get('quiz_category')
-      print("category is "+str(category.get('id')))
+      # print("category is "+str(category.get('id')))
       previous_questions = body.get('previous_questions')
-      print("previous_questions are "+str(previous_questions))
+      # print("previous_questions are "+str(previous_questions))
       questions = ''
       if(category.get('id')==0):
         questions = Question.query.all()
@@ -275,13 +273,13 @@ def create_app(test_config=None):
           'question': question,
           'forceEnd': False
         })
-
       else:
         return jsonify({
           'success':False,
           'forceEnd':True,
           'question':''
         })
+
     except Exception as e:
       abort(422)
 

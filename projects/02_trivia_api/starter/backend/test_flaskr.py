@@ -9,13 +9,17 @@ from models import setup_db, Question, Category
 
 class TriviaTestCase(unittest.TestCase):
     """This class represents the trivia test case"""
+    
 
     def setUp(self):
+        self.DB_NAME = os.getenv('DB_NAME')
+        self.DB_USER = os.getenv('DB_USER')
+        self.DB_PASS = os.getenv('DB_PASS')
         """Define test variables and initialize app."""
         self.app = create_app()
         self.client = self.app.test_client
-        self.database_name = "trivia"
-        self.database_path = "postgres://{}/{}".format('postgres:user@localhost:5432', self.database_name)
+        self.database_name = self.DB_NAME
+        self.database_path = "postgres://{}/{}".format(self.DB_USER+':'+self.DB_PASS+'@localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
 
         # binds the app to the current context
@@ -62,6 +66,31 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().get('/categories')
         data = json.loads(res.data)
         self.assertTrue(len(data['categories']))
+
+    def test_422_get_categories(self):
+        res = self.client().post('/categories')
+        self.assertTrue(res.status_code, 422)
+
+
+    def test_404_get_questions(self):
+        res = self.client().get('/questions', query_string={'page':1000})
+        self.assertEqual(res.status_code, 404)
+        data = json.loads(res.data)
+        self.assertEqual(data['Error Message'], 'Not Found')
+
+    def test_search_Question(self):
+        res = self.client().post('/questions/search', json={'searchTerm': 'which'})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(len(data['questions']))
+
+    def test_422_search_Question(self):
+        res = self.client().post('/questions/search', json={'searchTerm': 'FindTheTerm'})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['Error Message'], 'Unprocessable')
+
+    
 
     def test_get_questions(self):
         res = self.client().get('/questions?page=1')
